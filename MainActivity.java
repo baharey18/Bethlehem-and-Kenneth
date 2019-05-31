@@ -8,6 +8,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+/**
+ * This is the first page of the Reserved App
+ * Author Bethlehem Teshome
+ * 5/31/2019
+ */
 public class MainActivity extends AppCompatActivity {
     private EditText EmailOrPhoneET;//ET is for edit text
     private EditText PasswordET;

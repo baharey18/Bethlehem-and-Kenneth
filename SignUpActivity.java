@@ -7,6 +7,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+/**
+ * This is the Sign up page for new users
+ * Author Bethlehem Teshome
+ * 5/31/2019
+ */
 public class SignUpActivity extends AppCompatActivity {
     private EditText FirstName;
     private EditText LastName;
