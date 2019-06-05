@@ -3,10 +3,20 @@ package com.goreserved.reserved;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 
 /**
  * This is the first page of the Reserved App
@@ -14,12 +24,17 @@ import android.widget.TextView;
  * 5/31/2019
  */
 public class MainActivity extends AppCompatActivity {
-    private EditText EmailOrPhoneET;//ET is for edit text
+
+    int RC_SIGN_IN = 0;
+    SignInButton signInButton;
+    GoogleSignInClient mGoogleSignInClient;
+
+    private EditText EmailET;//ET is for edit text
     private EditText PasswordET;
     private Button SignIn;
     private int counter = 5;
     private TextView numOfAttempts;
-    private Button SignUp;
+    private TextView NewUserSignUp;
 
     /**
      *
@@ -30,11 +45,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        EmailOrPhoneET = (EditText)findViewById(R.id.editText_emailOrPhone);
-        PasswordET = (EditText)findViewById(R.id.editText_password);
-        SignIn = (Button)findViewById(R.id.button_signIn);
-        numOfAttempts = (TextView)findViewById(R.id.textView_NumOfAttempts);
-        SignUp = (Button)findViewById(R.id.button_signUp);
+        intializeUIViews();
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        signInButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+            }
+
+        });
 
         numOfAttempts.setText("Attempts remaining: 5");
 
@@ -42,19 +66,18 @@ public class MainActivity extends AppCompatActivity {
         SignIn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                validate(EmailOrPhoneET.getText().toString(), PasswordET.getText().toString());
+                validate(EmailET.getText().toString(), PasswordET.getText().toString());
             }
         });
 
 
-        SignUp.setOnClickListener(new View.OnClickListener(){
+        NewUserSignUp.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                goToSignUpPage();
+                Intent intent = new Intent(MainActivity.this, SignUpActivity.class);
+                startActivity(intent);
             }
         });
-
-
     }
 
     /**
@@ -76,13 +99,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      *
      */
-    public void goToSignUpPage()
-    {
-        Intent intent = new Intent(MainActivity.this, SignUpActivity.class);
-        startActivity(intent);
-        }
+    private void intializeUIViews(){
+        EmailET = (EditText)findViewById(R.id.editText_email);
+        PasswordET = (EditText)findViewById(R.id.editText_password);
+        SignIn = (Button)findViewById(R.id.button_signIn);
+        numOfAttempts = (TextView)findViewById(R.id.textView_NumOfAttempts);
+        NewUserSignUp = (TextView)findViewById(R.id.textView_newUser);
+        signInButton = findViewById(R.id.sign_in_button);
 
+    }
+
+    /**
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+      super.onActivityResult(requestCode, resultCode, data);
+
+      if(requestCode == RC_SIGN_IN){
+          Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+          handleSignInResult(task);
+      }
+    }
+
+    /**
+     *
+     * @param completedTask
+     */
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask){
+        try{
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            startActivity(new Intent(MainActivity.this, SecondActivity.class));
         }
+        catch(ApiException e){
+            Log.w("Google Sign In Error", "signInResult:failed code="+e.getStatusCode());
+            Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_LONG).show();
+        }
+    }
+    /**
+     *
+     */
+    protected void onStart(){
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if(account != null){
+            startActivity(new Intent(MainActivity.this, SecondActivity.class));
+        }
+        super.onStart();
+    }
+
+}
